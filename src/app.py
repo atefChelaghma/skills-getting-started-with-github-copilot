@@ -5,6 +5,51 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
+# Additional activities to be merged into the main activities store:
+additional_activities = {
+    # Sports (2)
+    "Basketball": {
+        "description": "Competitive basketball practices and inter-school games",
+        "schedule": "Tuesdays and Thursdays, 4:00 PM - 6:00 PM",
+        "max_participants": 18,
+        "participants": ["noah@mergington.edu", "liam@mergington.edu"]
+    },
+    "Soccer": {
+        "description": "Outdoor soccer training and weekend matches",
+        "schedule": "Mondays, Wednesdays, 4:00 PM - 5:30 PM",
+        "max_participants": 22,
+        "participants": ["ava@mergington.edu", "mia@mergington.edu"]
+    },
+
+    # Artistic (2)
+    "Art Club": {
+        "description": "Exploring painting, drawing, and mixed media projects",
+        "schedule": "Wednesdays, 3:30 PM - 5:00 PM",
+        "max_participants": 16,
+        "participants": ["isabella@mergington.edu", "charlotte@mergington.edu"]
+    },
+    "Drama Club": {
+        "description": "Acting, stagecraft, and school theater productions",
+        "schedule": "Fridays, 3:30 PM - 5:30 PM",
+        "max_participants": 25,
+        "participants": ["ethan@mergington.edu", "lucas@mergington.edu"]
+    },
+
+    # Intellectual (2)
+    "Debate Team": {
+        "description": "Competitive speech and debate preparation and tournaments",
+        "schedule": "Tuesdays, 5:00 PM - 6:30 PM",
+        "max_participants": 12,
+        "participants": ["oliver@mergington.edu", "elijah@mergington.edu"]
+    },
+    "Science Olympiad": {
+        "description": "STEM challenges, experiments, and regional competitions",
+        "schedule": "Thursdays, 4:00 PM - 6:00 PM",
+        "max_participants": 20,
+        "participants": ["amelia@mergington.edu", "harper@mergington.edu"]
+    }
+}
+
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -62,6 +107,29 @@ def signup_for_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
+    # Validate student is not already signed up
+    if email in activity["participants"]:
+        raise HTTPException(status_code=400, detail="Student is already signed up")
+
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.post("/activities/{activity_name}/unregister")
+def unregister_from_activity(activity_name: str, email: str):
+    """Unregister a student from an activity"""
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Get the specific activity
+    activity = activities[activity_name]
+
+    # Validate student is signed up
+    if email not in activity["participants"]:
+        raise HTTPException(status_code=400, detail="Student is not registered for this activity")
+
+    # Remove student
+    activity["participants"].remove(email)
+    return {"message": f"Unregistered {email} from {activity_name}"}
